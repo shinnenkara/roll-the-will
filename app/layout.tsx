@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { PlayerProvider } from "@/components/player-provider";
 
 const font = Press_Start_2P({
   weight: "400",
@@ -27,7 +28,7 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <PlayerProvider>{children}</PlayerProvider>
         </ThemeProvider>
       </body>
     </html>

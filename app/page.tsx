@@ -4,6 +4,7 @@ import type React from "react";
 import { RetroWindow } from "@/components/retro-window";
 import { ASCIITitle } from "@/components/ascii-title";
 import { Footer } from "@/components/footer";
+import { NameForm } from "@/components/name-form";
 
 export default function WelcomePage() {
   return (
@@ -17,6 +18,7 @@ export default function WelcomePage() {
       <RetroWindow title="Welcome" className="w-full max-w-md">
         <div className="flex flex-col items-center gap-6">
           <ASCIITitle />
+          <NameForm />
         </div>
       </RetroWindow>
 
