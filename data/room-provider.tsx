@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Player } from "@/data/player-provider";
 import { dices, DiceType } from "@/data/dices";
 
@@ -33,12 +39,18 @@ const RoomContext = createContext<RoomContextType | undefined>(undefined);
 export function RoomProvider({ children }: { children: React.ReactNode }) {
   const [room, setRoom] = useState<Room | null>(null);
 
+  const roomRef = useRef(room);
+  useEffect(() => {
+    roomRef.current = room;
+  }, [room]);
+
   const rollDice = (playerId: string, dice: DiceType): RollResult => {
-    if (!room) {
-      throw new Error(`Failed to load Room info`)
+    const roomData = roomRef.current;
+    if (!roomData) {
+      throw new Error(`Failed to load Room info`);
     }
 
-    const player = room.players.find((player) => player.id === playerId);
+    const player = roomData.players.find((player) => player.id === playerId);
     if (!player) {
       throw new Error(`Failed to load Player info`)
     }

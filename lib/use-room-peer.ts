@@ -68,6 +68,10 @@ export class RoomConnection {
     });
   }
 
+  send(message: P2PMessage) {
+    this.connection.send(message);
+  }
+
   private initSync(room: Room) {
     const message = createMessage("INIT_SYNC", { room: room });
     this.connection.send(message);
@@ -106,6 +110,10 @@ export class PlayerConnection {
     });
   }
 
+  send(message: P2PMessage) {
+    this.connection.send(message);
+  }
+
   join(player: Player) {
     const message = createMessage("JOIN", { player: player });
     this.connection.send(message);
@@ -118,6 +126,7 @@ type RoomPeer = {
   id: string;
   status: ConnectionStatus;
   connections: RoomConnection[];
+  hostConnection?: PlayerConnection;
 };
 
 export const useRoomPeer = () => {
@@ -241,6 +250,14 @@ export const useRoomPeer = () => {
           connection.subscribe(onJoin);
           connection.join(player);
 
+          setRoomPeer((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              hostConnection: connection,
+            };
+          });
+
           resolve(id);
         });
 
@@ -291,11 +308,21 @@ export const useRoomPeer = () => {
   };
 
   const sendToHost = async (message: P2PMessage): Promise<void> => {
+    if (!roomPeer?.hostConnection) {
+      throw new Error(`Failed to load Host info`)
+    }
 
+    roomPeer.hostConnection.send(message);
   };
 
   const broadcast = async (message: P2PMessage): Promise<void> => {
+    if (!roomPeer) {
+      throw new Error(`Failed to load Host info`)
+    }
 
+    roomPeer.connections.forEach((conn) => {
+      conn.send(message);
+    });
   };
 
   return { roomPeer, createPeer, joinPeer, sendToHost, broadcast };
