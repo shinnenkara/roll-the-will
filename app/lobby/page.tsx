@@ -107,8 +107,7 @@ export default function LobbyPage() {
             {/* Join Room Folder */}
             <button
               onClick={() => setActivePanel("join")}
-              className="retro-window p-6 flex flex-col items-center gap-4"
-              disabled
+              className="retro-window p-6 flex flex-col items-center gap-4 hover:bg-foreground hover:text-background group cursor-pointer"
             >
               <div className="w-24 h-20 border-2 border-current flex items-center justify-center relative">
                 <div className="absolute -top-2 left-2 w-8 h-4 border-2 border-current bg-background group-hover:bg-foreground" />

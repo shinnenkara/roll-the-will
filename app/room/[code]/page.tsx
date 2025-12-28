@@ -97,6 +97,7 @@ export default function RoomPage() {
           </aside>
 
           <div className="lg:col-span-4 flex flex-col gap-4">
+            {/* TODO: show every person last roll */}
             <DiceDisplay result={latestRoll} isRolling={isRolling} />
             <DiceTray onRoll={handleRoll} disabled={isRolling} />
             {/* TODO: move to the side, show when exactly rolled */}
