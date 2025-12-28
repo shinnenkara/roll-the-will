@@ -4,21 +4,21 @@ import { useState } from "react";
 import { RetroButton } from "@/components/retro-button";
 import { useRouter } from "next/navigation";
 import { RetroInput } from "@/components/retro-input";
-import { usePlayer } from "@/components/player-provider";
+import { usePlayer } from "@/data/player-provider";
 
 export function NameForm() {
-  const [playerName, setPlayerName] = useState<string>("");
+  const { player, setPlayer } = usePlayer();
+  const [playerName, setPlayerName] = useState<string>(player?.name ?? "");
   const router = useRouter();
-  const { setPlayer } = usePlayer();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (playerName && playerName.trim()) {
       setPlayer({
         id: crypto.randomUUID(),
         name: playerName.trim(),
       });
-      await router.push("/lobby");
+      router.push("/lobby");
     }
   };
 
@@ -34,6 +34,7 @@ export function NameForm() {
       <form onSubmit={handleSubmit} className="w-full flex flex-col gap-4">
         <RetroInput
           placeholder={"Player Name"}
+          name={"username"}
           value={playerName}
           onChange={(e) => setPlayerName(e.target.value)}
           maxLength={20}

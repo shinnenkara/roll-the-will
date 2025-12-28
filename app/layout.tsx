@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { PlayerProvider } from "@/components/player-provider";
+import { PlayerProvider } from "@/data/player-provider";
+import { Footer } from "@/components/footer";
+import React from "react";
+import { RoomProvider } from "@/data/room-provider";
 
 const font = Press_Start_2P({
   weight: "400",
@@ -28,7 +31,15 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <PlayerProvider>{children}</PlayerProvider>
+          <PlayerProvider>
+            <RoomProvider>
+              <main className="min-h-screen relative scanlines">
+                {/* Decorative dither pattern */}
+                {children}
+                <Footer />
+              </main>
+            </RoomProvider>
+          </PlayerProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -7,6 +7,7 @@ export function RetroButton({
   children,
   ...props
 }: React.ComponentProps<typeof Button>) {
+  // TODO: pretty effect on click - maybe depth - maybe slight xy transition - maybe both
   return (
     <Button
       {...props}
