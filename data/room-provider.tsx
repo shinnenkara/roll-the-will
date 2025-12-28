@@ -25,24 +25,27 @@ export interface Room {
 interface RoomContextType {
   room: Room | null;
   setRoom: (room: Room) => void;
-  isLoading: boolean;
-  rollDice: (playerId: string, dice: DiceType) => void;
+  rollDice: (playerId: string, dice: DiceType) => RollResult;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
 
 export function RoomProvider({ children }: { children: React.ReactNode }) {
   const [room, setRoom] = useState<Room | null>(null);
-  const [isLoading, setLoading] = useState(false);
 
-  const rollDice = (playerId: string, dice: DiceType) => {
-    if (!room) return;
+  const rollDice = (playerId: string, dice: DiceType): RollResult => {
+    if (!room) {
+      throw new Error(`Failed to load Room info`)
+    }
 
     const player = room.players.find((player) => player.id === playerId);
-    if (!player) return;
+    if (!player) {
+      throw new Error(`Failed to load Player info`)
+    }
 
     const result = Math.floor(Math.random() * dices[dice].maxValue) + 1;
-    const roll: RollResult = {
+
+    return {
       id: crypto.randomUUID(),
       playerId,
       playerName: player.name,
@@ -50,15 +53,10 @@ export function RoomProvider({ children }: { children: React.ReactNode }) {
       result,
       timestamp: Date.now(),
     };
-
-    setRoom({
-      ...room,
-      rolls: [roll, ...room.rolls],
-    });
   };
 
   return (
-    <RoomContext.Provider value={{ room, setRoom, isLoading, rollDice }}>
+    <RoomContext.Provider value={{ room, setRoom, rollDice }}>
       {children}
     </RoomContext.Provider>
   );

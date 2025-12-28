@@ -6,6 +6,7 @@ import { PlayerProvider } from "@/data/player-provider";
 import { Footer } from "@/components/footer";
 import React from "react";
 import { RoomProvider } from "@/data/room-provider";
+import { PeerProvider } from "@/data/peer-provider";
 
 const font = Press_Start_2P({
   weight: "400",
@@ -33,11 +34,12 @@ export default function RootLayout({
         >
           <PlayerProvider>
             <RoomProvider>
-              <main className="min-h-screen relative scanlines">
-                {/* Decorative dither pattern */}
-                {children}
-                <Footer />
-              </main>
+              <PeerProvider>
+                <main className="min-h-screen relative scanlines">
+                  {children}
+                  <Footer />
+                </main>
+              </PeerProvider>
             </RoomProvider>
           </PlayerProvider>
         </ThemeProvider>

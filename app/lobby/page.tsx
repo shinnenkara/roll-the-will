@@ -11,57 +11,77 @@ import { usePlayer } from "@/data/player-provider";
 import { generateRoomCode } from "@/lib/generate-room-code";
 import { RoomCode } from "@/components/room-code";
 import { LoadingScreen } from "@/components/loading-screen";
-import { useRoom } from "@/data/room-provider";
+import { usePeer } from "@/data/peer-provider";
 
 export default function LobbyPage() {
   const router = useRouter();
-  const { player, isLoading } = usePlayer();
-  const { setRoom } = useRoom();
+  const { player } = usePlayer();
+  const { createRoom, joinRoom } = usePeer();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Loading player");
 
   const [activePanel, setActivePanel] = useState<"none" | "create" | "join">(
     "none",
   );
   const [roomCode, setRoomCode] = useState("");
-  const [generatedCode, setGeneratedCode] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isLoading && !player) {
+    if (!player) {
       router.push("/");
     }
-  }, [router, player, isLoading]);
+  }, [router, player]);
 
   const handleCreateRoom = () => {
     const code = generateRoomCode();
-    setGeneratedCode(code);
+    setRoomCode(code);
     setActivePanel("create");
   };
 
-  const handleConfirmCreate = () => {
+  const handleConfirmCreate = async () => {
     if (!player) {
       console.error(`Failed to load Player info`);
       return;
     }
 
-    setRoom({
-      id: generatedCode,
-      players: [player],
-      host: player,
-      master: player,
-      rolls: [],
-    });
-    router.push(`/room/${generatedCode}`);
+    setIsLoading(true);
+    setLoadingMessage("Creating Room");
+
+    try {
+      await createRoom(roomCode);
+      router.push(`/room/${roomCode}`);
+    } catch {
+      console.error("Failed to create room. Please try again.");
+      setIsLoading(false);
+    }
   };
 
-  const handleJoinRoom = () => {};
+  const handleJoinRoom = async () => {
+    if (!player) {
+      console.error(`Failed to load Player info`);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingMessage("Joining Room");
+
+    try {
+      await joinRoom(roomCode);
+      router.push(`/room/${roomCode}`);
+    } catch {
+      console.error("Failed to join room. Please try again.");
+      setIsLoading(false);
+    }
+  };
 
   const handlePanelClose = () => {
     setActivePanel("none");
-    setGeneratedCode("");
     setRoomCode("");
   };
 
-  if (isLoading) return <LoadingScreen message="Loading player..." />;
+  if (isLoading) {
+    return <LoadingScreen message={loadingMessage} />;
+  }
 
   if (!player) return null;
 
@@ -127,9 +147,10 @@ export default function LobbyPage() {
             title="Create Room"
             onClose={() => setActivePanel("none")}
           >
+            {/* TODO: move room code as a popup after creation */}
             <div className="flex flex-col items-center gap-6">
               <p className="text-xl text-center">Your room code is:</p>
-              <RoomCode code={generatedCode} className={"w-60 md:text-2xl"} />
+              <RoomCode code={roomCode} className={"w-60 md:text-2xl"} />
               <p className="text-sm text-center dither p-2">
                 <span className="bg-background px-2">
                   Share this code with other players

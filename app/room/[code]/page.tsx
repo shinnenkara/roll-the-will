@@ -7,36 +7,37 @@ import { RetroButton } from "@/components/retro-button";
 import { RetroTooltip } from "@/components/retro-tooltip";
 import { RoomCode } from "@/components/room-code";
 import { usePlayer } from "@/data/player-provider";
-import { LoadingScreen } from "@/components/loading-screen";
 import { PlayerList } from "@/components/player-list";
 import { useRoom } from "@/data/room-provider";
 import { DiceTray } from "@/components/dice-tray";
 import { DiceDisplay } from "@/components/dice-display";
 import { RollHistory } from "@/components/roll-history";
 import { DiceType } from "@/data/dices";
+import { usePeer } from "@/data/peer-provider";
 
 export default function RoomPage() {
   const router = useRouter();
   const params = useParams();
   const roomCode = params.code as string;
   const { player } = usePlayer();
-  const { room, isLoading, rollDice } = useRoom();
+  const { room } = useRoom();
   const [isRolling, setIsRolling] = useState(false);
+  const { rollRequest } = usePeer();
 
   const handleLeaveRoom = () => {
     router.push("/lobby");
   };
 
   const handleRoll = useCallback(
-    (diceType: DiceType) => {
+    async (diceType: DiceType) => {
       if (!player) return;
 
-      setIsRolling(true)
-      rollDice(player.id, diceType);
+      setIsRolling(true);
+      await rollRequest(diceType);
       // Stuttery animation delay
-      setTimeout(() => setIsRolling(false), 600)
+      setTimeout(() => setIsRolling(false), 600);
     },
-    [player, rollDice],
+    [player, rollRequest],
   );
 
   useEffect(() => {
@@ -49,21 +50,15 @@ export default function RoomPage() {
   }, [player, router]);
 
   useEffect(() => {
-    if (isLoading || room) {
-      return;
+    if (!room) {
+      console.error(`Failed to load Room: ${roomCode}`);
+      router.push("/lobby");
     }
-
-    console.error(`Failed to load Room: ${roomCode}`);
-    router.push("/lobby");
-  }, [router, roomCode, room, isLoading]);
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
+  }, [router, roomCode, room]);
 
   if (!player || !room) return null;
 
-  const latestRoll = room.rolls[0] || null
+  const latestRoll = room.rolls[0] || null;
 
   return (
     <div className={"min-h-screen flex flex-col"}>
@@ -97,7 +92,7 @@ export default function RoomPage() {
           </aside>
 
           <div className="lg:col-span-4 flex flex-col gap-4">
-            {/* TODO: show every person last roll */}
+            {/* TODO: show every person last rolls */}
             <DiceDisplay result={latestRoll} isRolling={isRolling} />
             <DiceTray onRoll={handleRoll} disabled={isRolling} />
             {/* TODO: move to the side, show when exactly rolled */}
