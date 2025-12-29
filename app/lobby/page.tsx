@@ -86,7 +86,7 @@ export default function LobbyPage() {
   if (!player) return null;
 
   return (
-    <div className={"min-h-screen flex items-center justify-center"}>
+    <div className={"p-2 min-h-screen flex items-center justify-center"}>
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-16 radial-background opacity-30" />
         <div className="absolute bottom-16 left-0 w-full h-16 radial-background opacity-30" />
@@ -180,7 +180,7 @@ export default function LobbyPage() {
                   setError("");
                 }}
                 maxLength={6}
-                className="text-center text-2xl tracking-[0.3em] w-48 uppercase"
+                className="text-center text-xl md:text-2xl tracking-[0.3em] w-48 uppercase"
                 autoFocus
               />
               {error && (

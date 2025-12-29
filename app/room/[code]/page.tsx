@@ -74,13 +74,13 @@ export default function RoomPage() {
               Roll The Will
             </span>
           </div>
-          <div className={"pr-16"}>
-            <RoomCode code={roomCode} className={"w-32"} />
+          <div className={"pl-1 md:pr-16"}>
+            <RoomCode code={roomCode} className={"w-36"} />
           </div>
         </div>
       </header>
 
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-2">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-6 gap-4 h-full">
           <aside className="lg:col-span-2">
             {/* TODO: generate random icons for players, set max amount, add info cards */}
@@ -91,7 +91,7 @@ export default function RoomPage() {
             />
           </aside>
 
-          <div className="lg:col-span-4 flex flex-col gap-4">
+          <div className="lg:col-span-4 flex flex-col gap-4 pb-10">
             {/* TODO: show every person last rolls */}
             <DiceDisplay result={latestRoll} isRolling={isRolling} />
             <DiceTray onRoll={handleRoll} disabled={isRolling} />

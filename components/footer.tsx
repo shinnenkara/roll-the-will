@@ -20,7 +20,7 @@ export function Footer() {
               <Github />
             </RetroButtonIcon>
           </RetroTooltip>
-          <span className="text-xs">shinnenkara</span>
+          <span className="text-xs hidden sm:inline">shinnenkara</span>
         </a>
         <a
           href="https://ko-fi.com/shinnenkara"

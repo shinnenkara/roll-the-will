@@ -15,7 +15,7 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className={"min-h-screen flex items-center justify-center"}>
+    <div className={"p-2 min-h-screen flex items-center justify-center"}>
       {/* Decorative dither corners */}
       <div className="fixed top-0 left-0 w-32 h-32 radial-background opacity-50" />
       <div className="fixed top-0 right-0 w-32 h-32 radial-background opacity-50" />

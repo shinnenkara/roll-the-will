@@ -28,7 +28,7 @@ export function RoomCode({ code, className = "" }: Props) {
           readOnly
         />
       </div>
-      <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2">
+      <div className="hidden sm:block absolute left-full top-1/2 -translate-y-1/2 ml-2">
         <RetroTooltip tooltip={copied ? "Copied!" : "Copy Code"}>
           <RetroButton onClick={copyToClipboard}>
             {copied ? (
