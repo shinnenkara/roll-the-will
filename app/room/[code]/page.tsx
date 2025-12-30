@@ -89,8 +89,7 @@ export default function RoomPage() {
           <aside className="lg:col-span-2 flex flex-col gap-4">
             {/* TODO: generate random icons for players, set max amount, add info cards */}
             <PlayerList
-              players={room.players}
-              activePlayerIds={room.activePlayerIds}
+              players={room.activePlayers}
               hostId={room.host.id}
               currentPlayerId={player.id}
             />
@@ -104,8 +103,7 @@ export default function RoomPage() {
 
           <div className="lg:col-span-4 flex flex-col gap-4 pb-10">
             <DiceDisplay
-              players={room.players}
-              activePlayerIds={room.activePlayerIds}
+              players={room.activePlayers}
               rolls={room.rolls}
               currentPlayerId={player.id}
               isRolling={isRolling}

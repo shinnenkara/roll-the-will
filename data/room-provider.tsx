@@ -33,7 +33,7 @@ export interface Room {
   host: Player;
   master: Player;
   players: Player[];
-  activePlayerIds: string[];
+  activePlayers: Player[];
   rolls: RollResult[];
   messages: ChatMessage[];
 }

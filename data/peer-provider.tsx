@@ -34,7 +34,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     setRoom({
       id: code,
       players: [player],
-      activePlayerIds: [player.id],
+      activePlayers: [player],
       host: player,
       master: player,
       rolls: [],
@@ -50,7 +50,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       const newRoom: Room = {
         ...roomData,
         players: [...roomData.players, player],
-        activePlayerIds: [...roomData.activePlayerIds, player.id],
+        activePlayers: [...roomData.activePlayers, player],
       };
       setRoom(newRoom);
       broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
@@ -66,7 +66,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
 
       const newRoom: Room = {
         ...roomData,
-        activePlayerIds: roomData.activePlayerIds.filter((id) => id !== playerId),
+        activePlayers: roomData.activePlayers.filter((p) => p.id !== playerId),
       };
       setRoom(newRoom);
       broadcast(createMessage("STATE_UPDATE", { room: newRoom }));

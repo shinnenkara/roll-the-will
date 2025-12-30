@@ -7,7 +7,6 @@ import { dices } from "@/data/dices";
 
 interface RollResultDisplayProps {
   players: Player[];
-  activePlayerIds: string[];
   rolls: RollResult[];
   currentPlayerId: string;
   isRolling: boolean;
@@ -15,7 +14,6 @@ interface RollResultDisplayProps {
 
 export function DiceDisplay({
   players,
-  activePlayerIds,
   rolls,
   currentPlayerId,
   isRolling,
@@ -39,15 +37,14 @@ export function DiceDisplay({
           const latestRoll = getLatestRoll(player.id);
           const isCurrentPlayer = player.id === currentPlayerId;
           const showRolling = isCurrentPlayer && isRolling;
-          const isActive = activePlayerIds.includes(player.id);
 
           return (
             <div
               key={player.id}
-              className={`flex flex-col items-center justify-center border-2 border-foreground/20 p-4 ${isActive ? "bg-background/50" : "bg-background/20 opacity-60"}`}
+              className={`flex flex-col items-center justify-center border-2 border-foreground/20 p-4`}
             >
               <div className="text-sm font-bold mb-2 truncate w-full text-center">
-                {player.name} {isCurrentPlayer && "(You)"} {!isActive && "(Offline)"}
+                {player.name}
               </div>
 
               {showRolling ? (
