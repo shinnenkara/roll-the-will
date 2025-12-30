@@ -63,7 +63,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
 
       const newRoom: Room = {
         ...roomData,
-        rolls: [newRoll, ...roomData.rolls],
+        rolls: [newRoll, ...roomData.rolls].slice(0, 100),
       };
       setRoom(newRoom);
 
@@ -110,7 +110,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     const newRoll = rollDice(player.id, diceType);
     const newRoom: Room = {
       ...roomData,
-      rolls: [newRoll, ...roomData.rolls],
+      rolls: [newRoll, ...roomData.rolls].slice(0, 50),
     };
     setRoom(newRoom);
     await broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
