@@ -1,9 +1,5 @@
 import Peer, { DataConnection } from "peerjs";
-import {
-  generatePeerId,
-  getOriginalId,
-  getPlayerId,
-} from "@/lib/generate-peer-id";
+import { generatePeerId, getPlayerId } from "@/lib/generate-peer-id";
 import { useEffect, useRef, useState } from "react";
 import { Room } from "@/data/room-provider";
 import { Player } from "@/data/player-provider";
@@ -272,7 +268,7 @@ export const useRoomPeer = (): RoomPeerType => {
     onRollRequest: (playerId: string, diceType: DiceType) => Room,
     onMessageRequest: (playerId: string, content: string) => Room,
   ): Promise<string> => {
-    const openHandler = async (peer: Peer) => {
+    const openHandler = async () => {
       setRoomPeer({
         id: roomCode,
         status: "connected",
@@ -319,7 +315,7 @@ export const useRoomPeer = (): RoomPeerType => {
         });
 
         onLeave(playerId);
-      }
+      };
 
       conn.on("iceStateChanged", (state) => {
         switch (state) {
@@ -329,7 +325,7 @@ export const useRoomPeer = (): RoomPeerType => {
             handleDisconnect();
             break;
         }
-      })
+      });
 
       conn.on("error", (err) => {
         console.error("Player Connection Error:", err);
