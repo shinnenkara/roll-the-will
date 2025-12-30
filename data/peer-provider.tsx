@@ -12,6 +12,7 @@ interface PeerContextType {
   joinRoom: (code: string) => Promise<void>;
   leaveRoom: () => void;
   rollRequest: (diceType: DiceType) => Promise<void>;
+  cheatRollRequest: (diceType: DiceType, diceValue: number) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
 }
 
@@ -19,7 +20,7 @@ const PeerContext = createContext<PeerContextType | undefined>(undefined);
 
 export function PeerProvider({ children }: { children: React.ReactNode }) {
   const { player } = usePlayer();
-  const { room, setRoom, rollDice, createChatMessage } = useRoom();
+  const { room, setRoom, rollDice, cheatDice, createChatMessage } = useRoom();
   const { createPeer, joinPeer, sendToHost, broadcast, disconnect } =
     useRoomPeer();
 
@@ -182,6 +183,29 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     await broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
   };
 
+  const cheatRollRequest = async (diceType: DiceType, diceValue: number) => {
+    if (!player) {
+      throw new Error(`Failed to load Player info`);
+    }
+
+    const roomData = roomRef.current;
+    if (!roomData) {
+      throw new Error(`Failed to load Room info`);
+    }
+
+    if (player.id !== roomData.master.id) {
+      throw new Error(`Failed to load Master rights`);
+    }
+
+    const newRoll = cheatDice(player.id, diceType, diceValue);
+    const newRoom: Room = {
+      ...roomData,
+      rolls: [newRoll, ...roomData.rolls].slice(0, 50),
+    };
+    setRoom(newRoom);
+    await broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
+  }
+
   const sendMessage = async (content: string) => {
     if (!player) {
       throw new Error(`Failed to load Player info`);
@@ -213,7 +237,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PeerContext.Provider
-      value={{ createRoom, joinRoom, leaveRoom, rollRequest, sendMessage }}
+      value={{ createRoom, joinRoom, leaveRoom, rollRequest, cheatRollRequest, sendMessage }}
     >
       {children}
     </PeerContext.Provider>

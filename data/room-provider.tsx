@@ -43,6 +43,7 @@ interface RoomContextType {
   room: Room | null;
   setRoom: (room: Room | null) => void;
   rollDice: (playerId: string, dice: DiceType) => RollResult;
+  cheatDice: (playerId: string, dice: DiceType, value: number) => RollResult;
   createChatMessage: (playerId: string, content: string) => ChatMessage;
 }
 
@@ -79,6 +80,29 @@ export function RoomProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
+  const cheatDice = (playerId: string, dice: DiceType, value: number): RollResult => {
+    const roomData = roomRef.current;
+    if (!roomData) {
+      throw new Error(`Failed to load Room info`);
+    }
+
+    const player = roomData.players.find((player) => player.id === playerId);
+    if (!player) {
+      throw new Error(`Failed to load Player info`)
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      playerId,
+      playerName: player.name,
+      diceType: dice,
+      result: value,
+      timestamp: Date.now(),
+      isCheat: true,
+    };
+  };
+
+
   const createChatMessage = (playerId: string, content: string): ChatMessage => {
     const roomData = roomRef.current;
     if (!roomData) {
@@ -100,7 +124,7 @@ export function RoomProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <RoomContext.Provider value={{ room, setRoom, rollDice, createChatMessage }}>
+    <RoomContext.Provider value={{ room, setRoom, rollDice, cheatDice, createChatMessage }}>
       {children}
     </RoomContext.Provider>
   );

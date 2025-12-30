@@ -25,7 +25,7 @@ export default function RoomPage() {
   const { room } = useRoom();
   const [isRolling, setIsRolling] = useState(false);
   const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
-  const { rollRequest, sendMessage, leaveRoom } = usePeer();
+  const { rollRequest, cheatRollRequest, sendMessage, leaveRoom } = usePeer();
 
   const handleDialogClose = () => {
     router.replace(`/room/${roomCode}`);
@@ -56,6 +56,18 @@ export default function RoomPage() {
       setTimeout(() => setIsRolling(false), 600);
     },
     [player, rollRequest],
+  );
+
+  const handleCheatRoll = useCallback(
+    async (diceType: DiceType, value: number) => {
+      if (!player) return;
+
+      setIsRolling(true);
+      await cheatRollRequest(diceType, value);
+      // Stuttery animation delay
+      setTimeout(() => setIsRolling(false), 600);
+    },
+    [player, cheatRollRequest],
   );
 
   const handleSendMessage = async (content: string) => {
@@ -136,7 +148,12 @@ export default function RoomPage() {
               currentPlayerId={player.id}
               isRolling={isRolling}
             />
-            <DiceTray onRoll={handleRoll} disabled={isRolling} />
+            <DiceTray
+              onRoll={handleRoll}
+              disabled={isRolling}
+              isMaster={room.master.id === player.id}
+              onCheatRoll={handleCheatRoll}
+            />
             <RollHistory rolls={room.rolls} />
             <ChatBox
               className="lg:hidden flex"
@@ -182,7 +199,7 @@ export default function RoomPage() {
           initialOpen={true}
           onClose={() => setIsLeaveDialogOpen(false)}
           footer={(close) => (
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <RetroButton onClick={close}>[ Cancel ]</RetroButton>
               <RetroButton
                 className="text-destructive hover:text-destructive"
