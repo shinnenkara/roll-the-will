@@ -1,8 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Roll The Will
+
+A retro-styled, peer-to-peer dice rolling application designed for tabletop RPG sessions. "Roll The Will" allows players to join rooms, chat, and roll dice in a shared environment without the need for a central game server, leveraging WebRTC via PeerJS.
+
+**Live Demo:** [roll-the-will.vercel.app](https://roll-the-will.vercel.app/)
+
+## Features
+
+- **Retro Aesthetic**: Enjoy a nostalgic UI with dithering effects, pixelated fonts, and retro window styling.
+- **Peer-to-Peer Connection**: Built on top of [PeerJS](https://peerjs.com/), ensuring low-latency communication directly between players.
+- **Room Management**:
+  - Create and host private rooms.
+  - Join rooms via unique 6-character codes.
+  - Host controls for managing the session.
+- **Dice Tray**:
+  - Support for standard RPG dice (d4, d6, d8, d10, d12, d20).
+  - Real-time roll broadcasting to all players in the room.
+  - **Cheat/Hidden Rolls**: Allow the Game Master (or sneaky players) to roll secretly.
+- **Interactive Lobby**: Customizable player names and easy room navigation.
+- **Live Chat**: Integrated chat box for in-game communication.
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
+- **Language**: TypeScript
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **P2P Networking**: [PeerJS](https://peerjs.com/)
+- **UI Components**: Custom retro components (Radix UI primitives for accessibility).
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (v18 or higher recommended)
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/roll-the-will.git
+   cd roll-the-will
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
+
+### Running the Development Server
+
+Start the local development server:
 
 ```bash
 npm run dev
@@ -10,27 +62,18 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How it Works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Enter the Lobby**: Set your player name.
+2. **Create a Room**: The host creates a room and receives a unique code.
+3. **Share the Code**: The host shares the 6-character code with other players.
+4. **Join**: Other players enter the code in the "Join Room" section to connect via WebRTC.
+5. **Roll**: Click on dice in the tray to roll. Results appear instantly for everyone.
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](LICENSE)
