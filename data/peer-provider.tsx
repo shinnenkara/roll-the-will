@@ -10,6 +10,7 @@ interface PeerContextType {
   // TODO: remove code from create, generate on create
   createRoom: (code: string) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
+  leaveRoom: () => void;
   rollRequest: (diceType: DiceType) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
 }
@@ -19,7 +20,8 @@ const PeerContext = createContext<PeerContextType | undefined>(undefined);
 export function PeerProvider({ children }: { children: React.ReactNode }) {
   const { player } = usePlayer();
   const { room, setRoom, rollDice, createChatMessage } = useRoom();
-  const { createPeer, joinPeer, sendToHost, broadcast } = useRoomPeer();
+  const { createPeer, joinPeer, sendToHost, broadcast, disconnect } =
+    useRoomPeer();
 
   const roomRef = useRef(room);
   useEffect(() => {
@@ -33,6 +35,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
 
     setRoom({
       id: code,
+      status: "open",
       players: [player],
       activePlayers: [player],
       host: player,
@@ -129,7 +132,22 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       setRoom(roomData);
     };
 
-    await joinPeer(player, code, joinHandler);
+    const hostDisconnectHandler = () => {
+      const roomData = roomRef.current;
+      if (!roomData) return;
+
+      setRoom({
+        ...roomData,
+        status: "closed",
+      });
+    };
+
+    await joinPeer(player, code, joinHandler, hostDisconnectHandler);
+  };
+
+  const leaveRoom = () => {
+    disconnect();
+    setRoom(null);
   };
 
   const rollRequest = async (diceType: DiceType) => {
@@ -192,7 +210,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PeerContext.Provider
-      value={{ createRoom, joinRoom, rollRequest, sendMessage }}
+      value={{ createRoom, joinRoom, leaveRoom, rollRequest, sendMessage }}
     >
       {children}
     </PeerContext.Provider>

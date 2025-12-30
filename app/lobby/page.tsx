@@ -9,7 +9,6 @@ import { RetroInput } from "@/components/retro-input";
 import { RetroTooltip } from "@/components/retro-tooltip";
 import { usePlayer } from "@/data/player-provider";
 import { generateRoomCode } from "@/lib/generate-room-code";
-import { RoomCode } from "@/components/room-code";
 import { LoadingScreen } from "@/components/loading-screen";
 import { usePeer } from "@/data/peer-provider";
 
@@ -49,7 +48,7 @@ export default function LobbyPage() {
 
     try {
       await createRoom(roomCode);
-      router.push(`/room/${roomCode}`);
+      router.push(`/room/${roomCode}?new=true`);
     } catch {
       console.error("Failed to create room. Please try again.");
       setIsLoading(false);
@@ -147,17 +146,12 @@ export default function LobbyPage() {
             title="Create Room"
             onClose={() => setActivePanel("none")}
           >
-            {/* TODO: move room code as a popup after creation */}
             <div className="flex flex-col items-center gap-6">
-              <p className="text-xl text-center">Your room code is:</p>
-              <RoomCode code={roomCode} className={"w-60 md:text-2xl"} />
-              <p className="text-sm text-center dither p-2">
-                <span className="bg-background px-2">
-                  Share this code with other players
-                </span>
+              <p className="text-xl text-center">
+                Ready to start a new adventure?
               </p>
               <RetroButton onClick={handleConfirmCreate}>
-                [ CREATE & ENTER ]
+                [ CREATE ROOM ]
               </RetroButton>
             </div>
           </RetroWindow>

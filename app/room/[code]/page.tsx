@@ -15,6 +15,7 @@ import { RollHistory } from "@/components/roll-history";
 import { ChatBox } from "@/components/chat-box";
 import { DiceType } from "@/data/dices";
 import { usePeer } from "@/data/peer-provider";
+import { RetroDialog } from "@/components/retro-dialog";
 
 export default function RoomPage() {
   const router = useRouter();
@@ -23,9 +24,25 @@ export default function RoomPage() {
   const { player } = usePlayer();
   const { room } = useRoom();
   const [isRolling, setIsRolling] = useState(false);
-  const { rollRequest, sendMessage } = usePeer();
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const { rollRequest, sendMessage, leaveRoom } = usePeer();
+
+  const handleDialogClose = () => {
+    router.replace(`/room/${roomCode}`);
+  };
 
   const handleLeaveRoom = () => {
+    if (room && player && room.host.id === player.id) {
+      setIsLeaveDialogOpen(true);
+      return;
+    }
+
+    leaveRoom();
+    router.push("/lobby");
+  };
+
+  const confirmLeave = () => {
+    leaveRoom();
     router.push("/lobby");
   };
 
@@ -47,20 +64,31 @@ export default function RoomPage() {
   };
 
   useEffect(() => {
-    if (player) {
-      return;
+    if (!player) {
+      router.push("/");
     }
 
-    console.error(`Failed to load Player info`);
-    router.push("/");
   }, [player, router]);
 
   useEffect(() => {
     if (!room) {
-      console.error(`Failed to load Room: ${roomCode}`);
       router.push("/lobby");
     }
   }, [router, roomCode, room]);
+
+  useEffect(() => {
+    if (!room || !player) return;
+    if (room.host.id !== player.id) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Included for legacy support, e.g. Chrome/Edge < 119
+      e.returnValue = true;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [room, player]);
 
   if (!player || !room) return null;
 
@@ -119,6 +147,94 @@ export default function RoomPage() {
           </div>
         </div>
       </div>
+
+      <RetroDialog
+        onClose={handleDialogClose}
+        footer={(close) => {
+          return (
+            <div className={"flex flex-col items-center"}>
+              <RetroButton
+                onClick={() => {
+                  handleDialogClose();
+                  close();
+                }}
+              >
+                [ START GAME ]
+              </RetroButton>
+            </div>
+          );
+        }}
+      >
+        <div className="flex flex-col items-center gap-6 pb-6">
+          <p className="text-xl text-center">Your room code is:</p>
+          <RoomCode code={roomCode} className={"w-60 md:text-2xl"} />
+          <p className="text-sm text-center dither p-2">
+            <span className="bg-background px-2">
+              Share this code with other players
+            </span>
+          </p>
+        </div>
+      </RetroDialog>
+
+      {isLeaveDialogOpen && (
+        <RetroDialog
+          title="End Game?"
+          initialOpen={true}
+          onClose={() => setIsLeaveDialogOpen(false)}
+          footer={(close) => (
+            <div className="flex gap-4 justify-center">
+              <RetroButton onClick={close}>[ Cancel ]</RetroButton>
+              <RetroButton
+                className="text-destructive hover:text-destructive"
+                onClick={() => {
+                  confirmLeave();
+                  close();
+                }}
+              >
+                [ End Game ]
+              </RetroButton>
+            </div>
+          )}
+        >
+          <div className="flex flex-col items-center gap-4 pb-4 px-4">
+            <p className="text-center">
+              You are the host. Leaving will close the room for everyone.
+            </p>
+            <p className="text-center text-red-500 font-bold dither p-2">
+              <span className="bg-background px-2">Are you sure?</span>
+            </p>
+          </div>
+        </RetroDialog>
+      )}
+
+      {room.status === "closed" && (
+        <RetroDialog
+          title="Disconnected"
+          initialOpen={true}
+          onClose={() => router.push("/lobby")}
+          footer={(close) => (
+            <div className="flex justify-center">
+              <RetroButton
+                onClick={() => {
+                  leaveRoom();
+                  router.push("/lobby");
+                }}
+              >
+                [ Return to Lobby ]
+              </RetroButton>
+            </div>
+          )}
+        >
+          <div className="flex flex-col items-center gap-4 pb-4 px-4">
+            <p className="text-center text-destructive font-bold">
+              CONNECTION LOST
+            </p>
+            <p className="text-center">
+              The host has closed the room or the connection was lost.
+            </p>
+          </div>
+        </RetroDialog>
+      )}
     </div>
   );
 }

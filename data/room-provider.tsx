@@ -30,6 +30,7 @@ export interface ChatMessage {
 
 export interface Room {
   id: string;
+  status: "open" | "closed"
   host: Player;
   master: Player;
   players: Player[];
@@ -40,7 +41,7 @@ export interface Room {
 
 interface RoomContextType {
   room: Room | null;
-  setRoom: (room: Room) => void;
+  setRoom: (room: Room | null) => void;
   rollDice: (playerId: string, dice: DiceType) => RollResult;
   createChatMessage: (playerId: string, content: string) => ChatMessage;
 }

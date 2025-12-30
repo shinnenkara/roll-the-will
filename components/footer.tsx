@@ -33,7 +33,7 @@ export function Footer() {
               <Coffee />
             </RetroButtonIcon>
           </RetroTooltip>
-          <span className="text-xs">Support the Project</span>
+          <span className="text-xs">Support Project</span>
         </a>
         <ModeToggle />
       </div>

@@ -168,7 +168,14 @@ export class RoomConnection {
   }
 
   send(message: P2PMessage) {
-    this.connection.send(message);
+    if (!this.connection.open) {
+      return;
+    }
+    try {
+      this.connection.send(message);
+    } catch (e) {
+      console.error("Failed to send message:", e);
+    }
   }
 
   private initSync(room: Room) {
@@ -210,7 +217,14 @@ export class PlayerConnection {
   }
 
   send(message: P2PMessage) {
-    this.connection.send(message);
+    if (!this.connection.open) {
+      return;
+    }
+    try {
+      this.connection.send(message);
+    } catch (e) {
+      console.error("Failed to send message:", e);
+    }
   }
 
   join(player: Player) {
@@ -231,6 +245,7 @@ type RoomPeer = {
   status: ConnectionStatus;
   connections: Map<string, RoomConnection>;
   hostConnection?: PlayerConnection;
+  peer?: Peer;
 };
 
 interface RoomPeerType {
@@ -246,15 +261,18 @@ interface RoomPeerType {
     player: Player,
     roomCode: string,
     onJoin: (room: Room) => void,
+    onHostDisconnect: () => void,
   ) => Promise<string>;
   sendToHost: (message: P2PMessage) => Promise<void>;
   broadcast: (message: P2PMessage) => Promise<void>;
+  disconnect: () => void;
 }
 
 export const useRoomPeer = (): RoomPeerType => {
   const [roomPeer, setRoomPeer] = useState<RoomPeer>();
   const pool = new PeerPool();
   const playerPool = new PlayerPool();
+  const isDestroyingRef = useRef(false);
 
   const roomPeerRef = useRef(roomPeer);
   useEffect(() => {
@@ -268,11 +286,13 @@ export const useRoomPeer = (): RoomPeerType => {
     onRollRequest: (playerId: string, diceType: DiceType) => Room,
     onMessageRequest: (playerId: string, content: string) => Room,
   ): Promise<string> => {
-    const openHandler = async () => {
+    isDestroyingRef.current = false;
+    const openHandler = async (peer: Peer) => {
       setRoomPeer({
         id: roomCode,
         status: "connected",
         connections: new Map(),
+        peer,
       });
     };
 
@@ -300,6 +320,8 @@ export const useRoomPeer = (): RoomPeerType => {
       });
 
       const handleDisconnect = () => {
+        if (isDestroyingRef.current) return;
+
         const playerId = getPlayerId(roomCode, conn.peer);
 
         setRoomPeer((prev) => {
@@ -333,7 +355,7 @@ export const useRoomPeer = (): RoomPeerType => {
       });
 
       conn.on("close", () => {
-        console.error("Player Connection Closed");
+        console.log("Player Connection Closed");
         handleDisconnect();
       });
     };
@@ -347,7 +369,9 @@ export const useRoomPeer = (): RoomPeerType => {
     player: Player,
     roomCode: string,
     onJoin: (room: Room) => void,
+    onHostDisconnect: () => void,
   ): Promise<string> => {
+    isDestroyingRef.current = false;
     const id = `${roomCode}-${player.id}`;
 
     const openHandler = async (peer: Peer) => {
@@ -356,11 +380,31 @@ export const useRoomPeer = (): RoomPeerType => {
         connection.subscribe(onJoin);
         connection.join(player);
 
+        conn.on("close", () => {
+          console.log("Host connection closed");
+          onHostDisconnect();
+        });
+
+        conn.on("iceStateChanged", (state) => {
+          switch (state) {
+            case "failed":
+            case "disconnected":
+            case "closed":
+              onHostDisconnect();
+          }
+        })
+
+        conn.on("error", (err) => {
+          console.error("Host connection error:", err);
+          onHostDisconnect();
+        });
+
         setRoomPeer({
           id: id,
           status: "connected",
           hostConnection: connection,
           connections: new Map(),
+          peer,
         });
       };
 
@@ -392,5 +436,13 @@ export const useRoomPeer = (): RoomPeerType => {
     });
   };
 
-  return { roomPeer, createPeer, joinPeer, sendToHost, broadcast };
+  const disconnect = () => {
+    isDestroyingRef.current = true;
+    if (roomPeer?.peer) {
+      roomPeer.peer.destroy();
+    }
+    setRoomPeer(undefined);
+  };
+
+  return { roomPeer, createPeer, joinPeer, sendToHost, broadcast, disconnect };
 };
