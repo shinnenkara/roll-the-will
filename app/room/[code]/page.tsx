@@ -212,7 +212,7 @@ export default function RoomPage() {
           title="Disconnected"
           initialOpen={true}
           onClose={() => router.push("/lobby")}
-          footer={(close) => (
+          footer={() => (
             <div className="flex justify-center">
               <RetroButton
                 onClick={() => {
