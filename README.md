@@ -13,7 +13,7 @@ A retro-styled, peer-to-peer dice rolling application designed for tabletop RPG 
   - Join rooms via unique 6-character codes.
   - Host controls for managing the session.
 - **Dice Tray**:
-  - Support for standard RPG dice (d4, d6, d8, d10, d12, d20).
+  - Support for standard RPG dice (d2, d4, d6, d8, d10, d12, d20, d100).
   - Real-time roll broadcasting to all players in the room.
   - **Cheat/Hidden Rolls**: Allow the Game Master (or sneaky players) to roll secretly.
 - **Interactive Lobby**: Customizable player names and easy room navigation.
