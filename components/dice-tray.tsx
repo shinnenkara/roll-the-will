@@ -7,7 +7,6 @@ import { dices, DiceType } from "@/data/dices";
 import { Wand } from "lucide-react";
 import { useState } from "react";
 import { RetroDialog } from "@/components/retro-dialog";
-import { Input } from "@/components/ui/input";
 import { RetroInput } from "@/components/retro-input";
 
 interface DiceIconProps {
@@ -81,7 +80,11 @@ export function DiceTray({
                 onClick={() => setIsCheatOpen(true)}
                 disabled={disabled}
               >
-                <div className={"pixel-icon h-full w-full flex items-center justify-center p-3"}>
+                <div
+                  className={
+                    "pixel-icon h-full w-full flex items-center justify-center p-3"
+                  }
+                >
                   <Wand className="size-full" />
                 </div>
               </RetroButton>
