@@ -8,9 +8,9 @@ import { RetroButton } from "@/components/retro-button";
 import { RetroInput } from "@/components/retro-input";
 import { RetroTooltip } from "@/components/retro-tooltip";
 import { usePlayer } from "@/data/player-provider";
-import { generateRoomCode } from "@/lib/generate-room-code";
 import { LoadingScreen } from "@/components/loading-screen";
 import { usePeer } from "@/data/peer-provider";
+import { RetroDialog } from "@/components/retro-dialog";
 
 export default function LobbyPage() {
   const router = useRouter();
@@ -24,6 +24,9 @@ export default function LobbyPage() {
   );
   const [roomCode, setRoomCode] = useState("");
   const [error, setError] = useState("");
+  const [showConnectionTips, setShowConnectionTips] = useState<
+    "create" | "join" | null
+  >(null);
 
   useEffect(() => {
     if (!player) {
@@ -32,8 +35,6 @@ export default function LobbyPage() {
   }, [router, player]);
 
   const handleCreateRoom = () => {
-    const code = generateRoomCode();
-    setRoomCode(code);
     setActivePanel("create");
   };
 
@@ -47,11 +48,11 @@ export default function LobbyPage() {
     setLoadingMessage("Creating Room");
 
     try {
-      await createRoom(roomCode);
-      router.push(`/room/${roomCode}?new=true`);
+      const code = await createRoom();
+      router.push(`/room/${code}?new=true`);
     } catch {
-      console.error("Failed to create room. Please try again.");
       setIsLoading(false);
+      setShowConnectionTips("create");
     }
   };
 
@@ -68,8 +69,8 @@ export default function LobbyPage() {
       await joinRoom(roomCode);
       router.push(`/room/${roomCode}`);
     } catch {
-      console.error("Failed to join room. Please try again.");
       setIsLoading(false);
+      setShowConnectionTips("join");
     }
   };
 
@@ -188,6 +189,65 @@ export default function LobbyPage() {
               </RetroButton>
             </form>
           </RetroWindow>
+        )}
+
+        {showConnectionTips && (
+          <RetroDialog
+            title={
+              showConnectionTips === "create"
+                ? "Hosting Trouble?"
+                : "Joining Trouble?"
+            }
+            onClose={() => setShowConnectionTips(null)}
+            footer={(close) => (
+              <div className="flex justify-center w-full mt-4">
+                <RetroButton onClick={close}>[ I UNDERSTAND ]</RetroButton>
+              </div>
+            )}
+          >
+            <div className="flex flex-col gap-4">
+              <p className="text-center">
+                It seems we are having trouble connecting. Here are some tips:
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-sm">
+                {showConnectionTips === "create" ? (
+                  <>
+                    <li>
+                      Ensure you are not using <strong>public WiFi</strong> or{" "}
+                      <strong>4G/5G</strong> networks.
+                    </li>
+                    <li>
+                      Check if you are behind a <strong>corporate VPN</strong> or
+                      strict firewall.
+                    </li>
+                    <li>
+                      Disable ad-blockers or privacy extensions that might block
+                      WebRTC.
+                    </li>
+                    <li>Try again in a couple of seconds.</li>
+                  </>
+                ) : (
+                  <>
+                    <li>
+                      <strong>Double-check the room code.</strong> Ensure it
+                      matches the host&apos;s screen.
+                    </li>
+                    <li>
+                      Ensure you are not behind a <strong>corporate VPN</strong>{" "}
+                      or strict firewall.
+                    </li>
+                    <li>
+                      Disable ad-blockers or privacy extensions that might block
+                      WebRTC.
+                    </li>
+                    <li>
+                      If issues persist, ask the Host to check their connection.
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          </RetroDialog>
         )}
       </div>
     </div>

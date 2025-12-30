@@ -53,9 +53,15 @@ export class PeerPool {
       peer.on("open", async () => {
         clearTimeout(connectionTimeout);
         this.status = "connected";
-        await onOpen?.(peer);
 
-        resolve(peer);
+        try {
+          await onOpen?.(peer);
+          resolve(peer);
+        } catch (error) {
+          this.status = "error";
+          peer.destroy();
+          reject(error);
+        }
       });
 
       peer.on("connection", (conn) => {

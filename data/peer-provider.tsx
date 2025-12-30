@@ -5,10 +5,10 @@ import { createMessage, useRoomPeer } from "@/lib/use-room-peer";
 import { Player, usePlayer } from "@/data/player-provider";
 import { Room, useRoom } from "@/data/room-provider";
 import { DiceType } from "@/data/dices";
+import { generateRoomCode } from "@/lib/generate-room-code";
 
 interface PeerContextType {
-  // TODO: remove code from create, generate on create
-  createRoom: (code: string) => Promise<void>;
+  createRoom: () => Promise<string>;
   joinRoom: (code: string) => Promise<void>;
   leaveRoom: () => void;
   rollRequest: (diceType: DiceType) => Promise<void>;
@@ -28,11 +28,12 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     roomRef.current = room;
   }, [room]);
 
-  const createRoom = async (code: string) => {
+  const createRoom = async (): Promise<string> => {
     if (!player) {
       throw new Error(`Failed to load Player info`);
     }
 
+    const code = generateRoomCode();
     setRoom({
       id: code,
       status: "open",
@@ -121,6 +122,8 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     );
 
     await new Promise((res) => setTimeout(res, 1000));
+
+    return code;
   };
 
   const joinRoom = async (code: string) => {
