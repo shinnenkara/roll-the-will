@@ -44,7 +44,7 @@ export function DiceTray({
   isMaster?: boolean;
   onCheatRoll?: (type: DiceType, value: number) => void;
 }) {
-  const diceTypes: DiceType[] = ["d4", "d6", "d8", "d10", "d12", "d20"];
+  const diceTypes: DiceType[] = ["d2", "d4", "d6", "d8", "d10", "d12", "d20", "d100"];
   const [isCheatOpen, setIsCheatOpen] = useState(false);
   const [selectedCheatDice, setSelectedCheatDice] = useState<DiceType>("d20");
   const [cheatValue, setCheatValue] = useState<string>("");

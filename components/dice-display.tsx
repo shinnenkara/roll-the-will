@@ -65,6 +65,11 @@ export function DiceDisplay({
                       CRITICAL ROLL!
                     </p>
                   )}
+                  {latestRoll.result === 1 && (
+                    <p className="text-sm font-bold mt-1">
+                      CRITICAL MISS!
+                    </p>
+                  )}
                   {latestRoll.isCheat && (
                     <p className="text-xs mt-1 dither inline-block px-1">
                       <span className="bg-background px-1">* Fate sealed *</span>

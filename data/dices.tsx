@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export type DiceType = "d4" | "d6" | "d8" | "d10" | "d12" | "d20";
+export type DiceType = "d2" | "d4" | "d6" | "d8" | "d10" | "d12" | "d20" | "d100";
 
 export type Dice = {
   label: string;
@@ -9,6 +9,31 @@ export type Dice = {
 };
 
 export const dices: Record<DiceType, Dice> = {
+  d2: {
+    label: "D2 - Coin",
+    shape: (value = 2) => (
+      <svg viewBox="0 0 32 32" className="size-full">
+        <circle
+          cx="16"
+          cy="16"
+          r="12"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        />
+        <text
+          x="16"
+          y="22"
+          textAnchor="middle"
+          fontSize="9"
+          fill="currentColor"
+        >
+          {value}
+        </text>
+      </svg>
+    ),
+    maxValue: 2,
+  },
   d4: {
     label: "D4 - Tetrahedron",
     shape: (value = 4) => (
@@ -149,5 +174,31 @@ export const dices: Record<DiceType, Dice> = {
       </svg>
     ),
     maxValue: 20,
+  },
+  d100: {
+    label: "D100 - Zocchihedron",
+    shape: (value = 100) => (
+      <svg viewBox="0 0 32 32" className="size-full">
+        <circle
+          cx="16"
+          cy="16"
+          r="14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeDasharray="4 2"
+        />
+        <text
+          x="16"
+          y="21"
+          textAnchor="middle"
+          fontSize="8"
+          fill="currentColor"
+        >
+          {value}
+        </text>
+      </svg>
+    ),
+    maxValue: 100,
   },
 };

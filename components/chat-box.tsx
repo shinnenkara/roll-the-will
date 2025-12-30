@@ -88,7 +88,7 @@ export function ChatBox({
                     }`}
                   >
                     <div
-                      className={`border-2 px-2 py-1 text-sm break-words ${
+                      className={`border-2 px-2 py-1 text-sm break-all ${
                         isMe
                           ? "border-foreground bg-background text-right"
                           : "border-foreground bg-background"

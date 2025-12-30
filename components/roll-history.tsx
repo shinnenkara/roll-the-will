@@ -51,7 +51,7 @@ export function RollHistory({ rolls }: RollHistoryProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rolls.slice(0, 10).map((roll) => {
+              {rolls.map((roll) => {
                 const date = new Date(roll.timestamp);
                 const timeString = date.toLocaleTimeString([], {
                   hour: "2-digit",
