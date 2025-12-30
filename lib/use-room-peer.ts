@@ -43,7 +43,7 @@ export class PeerPool {
     const id = generatePeerId(code);
     return new Promise((resolve, reject) => {
       this.status = "connecting";
-      const peer = new Peer(id, { debug: 3 });
+      const peer = new Peer(id, { debug: 0 });
 
       const connectionTimeout = setTimeout(() => {
         peer.destroy();
