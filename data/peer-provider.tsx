@@ -12,7 +12,7 @@ interface PeerContextType {
   joinRoom: (code: string) => Promise<void>;
   leaveRoom: () => void;
   rollRequest: (diceType: DiceType) => Promise<void>;
-  cheatRollRequest: (diceType: DiceType, diceValue: number) => Promise<void>;
+  cheatRollRequest: (diceType: DiceType, diceValue: number, hide?: boolean) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
 }
 
@@ -183,7 +183,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     await broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
   };
 
-  const cheatRollRequest = async (diceType: DiceType, diceValue: number) => {
+  const cheatRollRequest = async (diceType: DiceType, diceValue: number, hide?: boolean) => {
     if (!player) {
       throw new Error(`Failed to load Player info`);
     }
@@ -197,7 +197,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       throw new Error(`Failed to load Master rights`);
     }
 
-    const newRoll = cheatDice(player.id, diceType, diceValue);
+    const newRoll = cheatDice(player.id, diceType, diceValue, hide);
     const newRoom: Room = {
       ...roomData,
       rolls: [newRoll, ...roomData.rolls].slice(0, 50),

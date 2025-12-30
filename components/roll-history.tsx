@@ -15,9 +15,19 @@ import { RetroTooltip } from "@/components/retro-tooltip";
 
 interface RollHistoryProps {
   rolls: RollResult[];
+  currentPlayerId: string;
+  masterId: string;
 }
 
-export function RollHistory({ rolls }: RollHistoryProps) {
+export function RollHistory({
+  rolls,
+  currentPlayerId,
+  masterId,
+}: RollHistoryProps) {
+  const isViewerMaster = currentPlayerId === masterId;
+  const visibleRolls = rolls.filter(
+    (roll) => !roll.isHidden || isViewerMaster || roll.playerId === currentPlayerId,
+  );
   return (
     <RetroWindow
       icon={
@@ -28,7 +38,7 @@ export function RollHistory({ rolls }: RollHistoryProps) {
       title={"History"}
     >
       <div className="max-h-[200px] overflow-y-auto">
-        {rolls.length === 0 ? (
+        {visibleRolls.length === 0 ? (
           <p className="text-center text-sm p-2 dither">
             <span className="bg-background px-1">No rolls yet</span>
           </p>
@@ -51,7 +61,7 @@ export function RollHistory({ rolls }: RollHistoryProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rolls.map((roll) => {
+              {visibleRolls.map((roll) => {
                 const date = new Date(roll.timestamp);
                 const timeString = date.toLocaleTimeString([], {
                   hour: "2-digit",
@@ -73,6 +83,11 @@ export function RollHistory({ rolls }: RollHistoryProps) {
                     </TableCell>
                     <TableCell className="py-1 text-right font-bold">
                       {roll.result}
+                      {roll.isHidden && (
+                        <span className="text-[10px] opacity-50 ml-1 block leading-none">
+                          (Hidden)
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="py-1 text-right">
                       <RetroTooltip

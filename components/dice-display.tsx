@@ -9,6 +9,7 @@ interface RollResultDisplayProps {
   players: Player[];
   rolls: RollResult[];
   currentPlayerId: string;
+  masterId: string;
   isRolling: boolean;
 }
 
@@ -16,10 +17,17 @@ export function DiceDisplay({
   players,
   rolls,
   currentPlayerId,
+  masterId,
   isRolling,
 }: RollResultDisplayProps) {
-  const getLatestRoll = (playerId: string) =>
-    rolls.find((r) => r.playerId === playerId);
+  const getLatestRoll = (playerId: string) => {
+    const isViewerMaster = currentPlayerId === masterId;
+    return rolls.find(
+      (r) =>
+        r.playerId === playerId &&
+        (!r.isHidden || isViewerMaster || r.playerId === currentPlayerId),
+    );
+  };
 
   const getGridClass = () => {
     if (players.length <= 1) return "grid-cols-1 max-w-xl mx-auto w-full";
@@ -68,6 +76,11 @@ export function DiceDisplay({
                   {latestRoll.result === 1 && (
                     <p className="text-sm font-bold mt-1">
                       CRITICAL MISS!
+                    </p>
+                  )}
+                  {latestRoll.isHidden && (
+                    <p className="text-xs mt-1 dither inline-block px-1">
+                      <span className="bg-background px-1">* Hidden *</span>
                     </p>
                   )}
                   {latestRoll.isCheat && (

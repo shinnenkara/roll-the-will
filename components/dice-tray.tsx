@@ -42,12 +42,13 @@ export function DiceTray({
   onRoll: (type: DiceType) => void;
   disabled?: boolean;
   isMaster?: boolean;
-  onCheatRoll?: (type: DiceType, value: number) => void;
+  onCheatRoll?: (type: DiceType, value: number, hidden: boolean) => void;
 }) {
   const diceTypes: DiceType[] = ["d2", "d4", "d6", "d8", "d10", "d12", "d20", "d100"];
   const [isCheatOpen, setIsCheatOpen] = useState(false);
   const [selectedCheatDice, setSelectedCheatDice] = useState<DiceType>("d20");
   const [cheatValue, setCheatValue] = useState<string>("");
+  const [isCheatHidden, setIsCheatHidden] = useState(false);
 
   const handleCheatSubmit = () => {
     const value = parseInt(cheatValue);
@@ -56,9 +57,10 @@ export function DiceTray({
     const max = dices[selectedCheatDice].maxValue;
     const clampedValue = Math.min(Math.max(value, 1), max);
 
-    onCheatRoll(selectedCheatDice, clampedValue);
+    onCheatRoll(selectedCheatDice, clampedValue, isCheatHidden);
     setIsCheatOpen(false);
     setCheatValue("");
+    setIsCheatHidden(false);
   };
 
   return (
@@ -135,6 +137,19 @@ export function DiceTray({
                 className="text-center text-lg"
                 placeholder="?"
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="hidden-roll"
+                checked={isCheatHidden}
+                onChange={(e) => setIsCheatHidden(e.target.checked)}
+                className="w-4 h-4"
+              />
+              <label htmlFor="hidden-roll" className="text-sm font-bold cursor-pointer select-none">
+                Hidden Roll
+              </label>
             </div>
           </div>
         </RetroDialog>

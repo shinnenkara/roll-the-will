@@ -18,6 +18,7 @@ export interface RollResult {
   result: number;
   timestamp: number;
   isCheat?: boolean;
+  isHidden?: boolean;
 }
 
 export interface ChatMessage {
@@ -43,7 +44,7 @@ interface RoomContextType {
   room: Room | null;
   setRoom: (room: Room | null) => void;
   rollDice: (playerId: string, dice: DiceType) => RollResult;
-  cheatDice: (playerId: string, dice: DiceType, value: number) => RollResult;
+  cheatDice: (playerId: string, dice: DiceType, value: number, hide?: boolean) => RollResult;
   createChatMessage: (playerId: string, content: string) => ChatMessage;
 }
 
@@ -80,7 +81,7 @@ export function RoomProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  const cheatDice = (playerId: string, dice: DiceType, value: number): RollResult => {
+  const cheatDice = (playerId: string, dice: DiceType, value: number, hide?: boolean): RollResult => {
     const roomData = roomRef.current;
     if (!roomData) {
       throw new Error(`Failed to load Room info`);
@@ -99,6 +100,7 @@ export function RoomProvider({ children }: { children: React.ReactNode }) {
       result: value,
       timestamp: Date.now(),
       isCheat: true,
+      isHidden: hide,
     };
   };
 

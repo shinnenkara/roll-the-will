@@ -59,11 +59,11 @@ export default function RoomPage() {
   );
 
   const handleCheatRoll = useCallback(
-    async (diceType: DiceType, value: number) => {
+    async (diceType: DiceType, value: number, hidden: boolean) => {
       if (!player) return;
 
       setIsRolling(true);
-      await cheatRollRequest(diceType, value);
+      await cheatRollRequest(diceType, value, hidden);
       // Stuttery animation delay
       setTimeout(() => setIsRolling(false), 600);
     },
@@ -146,6 +146,7 @@ export default function RoomPage() {
               players={room.activePlayers}
               rolls={room.rolls}
               currentPlayerId={player.id}
+              masterId={room.master.id}
               isRolling={isRolling}
             />
             <DiceTray
@@ -154,7 +155,11 @@ export default function RoomPage() {
               isMaster={room.master.id === player.id}
               onCheatRoll={handleCheatRoll}
             />
-            <RollHistory rolls={room.rolls} />
+            <RollHistory
+              rolls={room.rolls}
+              currentPlayerId={player.id}
+              masterId={room.master.id}
+            />
             <ChatBox
               className="lg:hidden flex"
               messages={room.messages}
