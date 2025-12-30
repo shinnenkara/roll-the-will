@@ -1,5 +1,9 @@
 import Peer, { DataConnection } from "peerjs";
-import { generatePeerCode } from "@/lib/generate-peer-code";
+import {
+  generatePeerId,
+  getOriginalId,
+  getPlayerId,
+} from "@/lib/generate-peer-id";
 import { useEffect, useRef, useState } from "react";
 import { Room } from "@/data/room-provider";
 import { Player } from "@/data/player-provider";
@@ -40,7 +44,7 @@ export class PeerPool {
     onOpen?: (peer: Peer) => Promise<void> | void,
     onConnection?: (peer: Peer, connection: DataConnection) => void,
   ): Promise<Peer> {
-    const id = generatePeerCode(code);
+    const id = generatePeerId(code);
     return new Promise((resolve, reject) => {
       this.status = "connecting";
       const peer = new Peer(id, { debug: 3 });
@@ -85,7 +89,7 @@ export class PlayerPool {
     peer: Peer,
     onOpen: (connection: DataConnection) => void,
   ): Promise<DataConnection> {
-    const id = generatePeerCode(code);
+    const id = generatePeerId(code);
 
     return new Promise((resolve, reject) => {
       const connection = peer.connect(id, { reliable: true });
@@ -229,11 +233,29 @@ type ConnectionStatus =
 type RoomPeer = {
   id: string;
   status: ConnectionStatus;
-  connections: RoomConnection[];
+  connections: Map<string, RoomConnection>;
   hostConnection?: PlayerConnection;
 };
 
-export const useRoomPeer = () => {
+interface RoomPeerType {
+  roomPeer: RoomPeer | undefined;
+  createPeer: (
+    roomCode: string,
+    onJoin: (player: Player) => Room,
+    onLeave: (playerId: string) => Room,
+    onRollRequest: (playerId: string, diceType: DiceType) => Room,
+    onMessageRequest: (playerId: string, content: string) => Room,
+  ) => Promise<string>;
+  joinPeer: (
+    player: Player,
+    roomCode: string,
+    onJoin: (room: Room) => void,
+  ) => Promise<string>;
+  sendToHost: (message: P2PMessage) => Promise<void>;
+  broadcast: (message: P2PMessage) => Promise<void>;
+}
+
+export const useRoomPeer = (): RoomPeerType => {
   const [roomPeer, setRoomPeer] = useState<RoomPeer>();
   const pool = new PeerPool();
   const playerPool = new PlayerPool();
@@ -246,6 +268,7 @@ export const useRoomPeer = () => {
   const createPeer = async (
     roomCode: string,
     onJoin: (player: Player) => Room,
+    onLeave: (playerId: string) => Room,
     onRollRequest: (playerId: string, diceType: DiceType) => Room,
     onMessageRequest: (playerId: string, content: string) => Room,
   ): Promise<string> => {
@@ -253,22 +276,69 @@ export const useRoomPeer = () => {
       setRoomPeer({
         id: roomCode,
         status: "connected",
-        connections: [],
+        connections: new Map(),
       });
-    }
+    };
 
     const connectionHandler = (peer: Peer, conn: DataConnection) => {
       conn.on("open", () => {
         const connection = new RoomConnection(conn);
-        connection.subscribe(onJoin, onRollRequest, onMessageRequest);
+
+        const joinHandler = (player: Player) => {
+          setRoomPeer((prev) => {
+            if (!prev) return;
+
+            const newConnections = new Map(prev.connections);
+            newConnections.set(player.id, connection);
+
+            return {
+              ...prev,
+              connections: newConnections,
+            };
+          });
+
+          return onJoin(player);
+        };
+
+        connection.subscribe(joinHandler, onRollRequest, onMessageRequest);
+      });
+
+      const handleDisconnect = () => {
+        const playerId = getPlayerId(roomCode, conn.peer);
+
         setRoomPeer((prev) => {
           if (!prev) return;
 
+          const newConnections = new Map(prev.connections);
+          newConnections.delete(playerId);
+
           return {
             ...prev,
-            connections: [...prev.connections, connection],
-          }
+            connections: newConnections,
+          };
         });
+
+        onLeave(playerId);
+      }
+
+      conn.on("iceStateChanged", (state) => {
+        switch (state) {
+          case "closed":
+          case "disconnected":
+          case "failed":
+            handleDisconnect();
+            break;
+        }
+      })
+
+      conn.on("error", (err) => {
+        console.error("Player Connection Error:", err);
+        handleDisconnect();
+      });
+
+      conn.on("close", () => {
+        console.error("Player Connection Closed");
+        handleDisconnect();
       });
     };
 
@@ -282,7 +352,7 @@ export const useRoomPeer = () => {
     roomCode: string,
     onJoin: (room: Room) => void,
   ): Promise<string> => {
-    const id = `${roomCode}-${player.id}`
+    const id = `${roomCode}-${player.id}`;
 
     const openHandler = async (peer: Peer) => {
       const connectHandler = (conn: DataConnection) => {
@@ -294,7 +364,7 @@ export const useRoomPeer = () => {
           id: id,
           status: "connected",
           hostConnection: connection,
-          connections: [],
+          connections: new Map(),
         });
       };
 

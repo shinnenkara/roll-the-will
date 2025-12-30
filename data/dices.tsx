@@ -2,12 +2,16 @@ import { ReactNode } from "react";
 
 export type DiceType = "d4" | "d6" | "d8" | "d10" | "d12" | "d20";
 
-export type Dice = { label: string; shape: ReactNode; maxValue: number };
+export type Dice = {
+  label: string;
+  shape: (value?: ReactNode) => ReactNode;
+  maxValue: number;
+};
 
 export const dices: Record<DiceType, Dice> = {
   d4: {
     label: "D4 - Tetrahedron",
-    shape: (
+    shape: (value = 4) => (
       <svg viewBox="0 0 32 32" className="size-full">
         <polygon
           points="16,4 28,28 4,28"
@@ -22,7 +26,7 @@ export const dices: Record<DiceType, Dice> = {
           fontSize="9"
           fill="currentColor"
         >
-          4
+          {value}
         </text>
       </svg>
     ),
@@ -30,7 +34,7 @@ export const dices: Record<DiceType, Dice> = {
   },
   d6: {
     label: "D6 - Cube",
-    shape: (
+    shape: (value = 6) => (
       <svg viewBox="0 0 32 32" className="size-full">
         <rect
           x="4"
@@ -48,7 +52,7 @@ export const dices: Record<DiceType, Dice> = {
           fontSize="9"
           fill="currentColor"
         >
-          6
+          {value}
         </text>
       </svg>
     ),
@@ -56,7 +60,7 @@ export const dices: Record<DiceType, Dice> = {
   },
   d8: {
     label: "D8 - Octahedron",
-    shape: (
+    shape: (value = 8) => (
       <svg viewBox="0 0 32 32" className="size-full">
         <polygon
           points="16,2 30,16 16,30 2,16"
@@ -71,7 +75,7 @@ export const dices: Record<DiceType, Dice> = {
           fontSize="9"
           fill="currentColor"
         >
-          8
+          {value}
         </text>
       </svg>
     ),
@@ -79,7 +83,7 @@ export const dices: Record<DiceType, Dice> = {
   },
   d10: {
     label: "D10 - Pentagonal",
-    shape: (
+    shape: (value = 10) => (
       <svg viewBox="0 0 32 32" className="size-full">
         <polygon
           points="16,2 28,12 24,28 8,28 4,12"
@@ -94,7 +98,7 @@ export const dices: Record<DiceType, Dice> = {
           fontSize="9"
           fill="currentColor"
         >
-          10
+          {value}
         </text>
       </svg>
     ),
@@ -102,7 +106,7 @@ export const dices: Record<DiceType, Dice> = {
   },
   d12: {
     label: "D12 - Dodecahedron",
-    shape: (
+    shape: (value = 12) => (
       <svg viewBox="0 0 32 32" className="size-full">
         <polygon
           points="16,2 26,6 30,16 26,26 16,30 6,26 2,16 6,6"
@@ -117,7 +121,7 @@ export const dices: Record<DiceType, Dice> = {
           fontSize="9"
           fill="currentColor"
         >
-          12
+          {value}
         </text>
       </svg>
     ),
@@ -125,7 +129,7 @@ export const dices: Record<DiceType, Dice> = {
   },
   d20: {
     label: "D20 - Icosahedron",
-    shape: (
+    shape: (value = 20) => (
       <svg viewBox="0 0 32 32" className="size-full">
         <polygon
           points="16,2 28,8 28,24 16,30 4,24 4,8"
@@ -140,7 +144,7 @@ export const dices: Record<DiceType, Dice> = {
           fontSize="9"
           fill="currentColor"
         >
-          20
+          {value}
         </text>
       </svg>
     ),

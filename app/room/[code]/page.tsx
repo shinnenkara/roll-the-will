@@ -64,8 +64,6 @@ export default function RoomPage() {
 
   if (!player || !room) return null;
 
-  const latestRoll = room.rolls[0] || null;
-
   return (
     <div className={"min-h-screen flex flex-col"}>
       <header className="border-b-2 border-foreground bg-background sticky radial-background top-0 z-40">
@@ -92,6 +90,7 @@ export default function RoomPage() {
             {/* TODO: generate random icons for players, set max amount, add info cards */}
             <PlayerList
               players={room.players}
+              activePlayerIds={room.activePlayerIds}
               hostId={room.host.id}
               currentPlayerId={player.id}
             />
@@ -104,8 +103,13 @@ export default function RoomPage() {
           </aside>
 
           <div className="lg:col-span-4 flex flex-col gap-4 pb-10">
-            {/* TODO: show every person last rolls */}
-            <DiceDisplay result={latestRoll} isRolling={isRolling} />
+            <DiceDisplay
+              players={room.players}
+              activePlayerIds={room.activePlayerIds}
+              rolls={room.rolls}
+              currentPlayerId={player.id}
+              isRolling={isRolling}
+            />
             <DiceTray onRoll={handleRoll} disabled={isRolling} />
             <RollHistory rolls={room.rolls} />
             <ChatBox

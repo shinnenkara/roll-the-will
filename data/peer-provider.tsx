@@ -34,6 +34,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     setRoom({
       id: code,
       players: [player],
+      activePlayerIds: [player.id],
       host: player,
       master: player,
       rolls: [],
@@ -49,9 +50,26 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       const newRoom: Room = {
         ...roomData,
         players: [...roomData.players, player],
+        activePlayerIds: [...roomData.activePlayerIds, player.id],
       };
       setRoom(newRoom);
+      broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
 
+      return newRoom;
+    };
+
+    const handlePlayerLeave = (playerId: string): Room => {
+      const roomData = roomRef.current;
+      if (!roomData) {
+        throw new Error(`Failed to load Room info`);
+      }
+
+      const newRoom: Room = {
+        ...roomData,
+        activePlayerIds: roomData.activePlayerIds.filter((id) => id !== playerId),
+      };
+      setRoom(newRoom);
+      broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
       return newRoom;
     };
 
@@ -91,7 +109,13 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       return newRoom;
     };
 
-    await createPeer(code, handleNewPlayer, handleNewRoll, handleNewMessage);
+    await createPeer(
+      code,
+      handleNewPlayer,
+      handlePlayerLeave,
+      handleNewRoll,
+      handleNewMessage,
+    );
 
     await new Promise((res) => setTimeout(res, 1000));
   };

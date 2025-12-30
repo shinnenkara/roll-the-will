@@ -18,7 +18,7 @@ export function DiceIcon({ type, onClick, disabled }: DiceIconProps) {
   return (
     <RetroTooltip tooltip={dice.label}>
       <RetroButton size={"icon-xl"} onClick={onClick} disabled={disabled}>
-        <div className={"p-0.5"}>{dice.shape}</div>
+        <div className={"p-0.5"}>{dice.shape()}</div>
       </RetroButton>
     </RetroTooltip>
   );
