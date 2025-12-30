@@ -9,6 +9,7 @@ export type P2PMessageType =
   | "JOIN"
   | "INIT_SYNC"
   | "STATE_UPDATE"
+  | "ROLL_UPDATE"
   | "ROLL_REQUEST"
   | "PING"
   | "PONG";
@@ -25,6 +26,94 @@ export const createMessage = (
 ): P2PMessage => {
   return { type, payload, timestamp: Date.now() };
 };
+
+export class PeerPool {
+  status: ConnectionStatus;
+  private timeoutMs = 10000;
+
+  constructor() {
+    this.status = "created";
+  }
+
+  async open(
+    code: string,
+    onOpen?: (peer: Peer) => Promise<void> | void,
+    onConnection?: (peer: Peer, connection: DataConnection) => void,
+  ): Promise<Peer> {
+    const id = generatePeerCode(code);
+    return new Promise((resolve, reject) => {
+      this.status = "connecting";
+      const peer = new Peer(id, { debug: 3 });
+
+      const connectionTimeout = setTimeout(() => {
+        peer.destroy();
+        reject(new Error("Peer error: Connection timeout"));
+      }, this.timeoutMs);
+
+      peer.on("open", async () => {
+        clearTimeout(connectionTimeout);
+        this.status = "connected";
+        await onOpen?.(peer);
+
+        resolve(peer);
+      });
+
+      peer.on("connection", (conn) => {
+        onConnection?.(peer, conn);
+      });
+
+      peer.on("error", (err) => {
+        clearTimeout(connectionTimeout);
+        this.status = "error";
+        reject(new Error(`Peer error: ${err.message}`));
+      });
+
+      peer.on("disconnected", () => {
+        clearTimeout(connectionTimeout);
+        this.status = "disconnected";
+        peer.reconnect();
+      });
+    });
+  }
+}
+
+export class PlayerPool {
+  constructor() {}
+
+  async open(
+    code: string,
+    peer: Peer,
+    onOpen: (connection: DataConnection) => void,
+  ): Promise<DataConnection> {
+    const id = generatePeerCode(code);
+
+    return new Promise((resolve, reject) => {
+      const connection = peer.connect(id, { reliable: true });
+
+      const syncTimeout = setTimeout(() => {
+        connection.close();
+        reject(new Error("Connection error: Synchronization timeout"));
+      }, 10000);
+
+      connection.on("open", () => {
+        clearTimeout(syncTimeout);
+        onOpen?.(connection);
+
+        resolve(connection);
+      });
+
+      connection.on("error", (err) => {
+        clearTimeout(syncTimeout);
+        reject(new Error(`Connection error: ${err.message}`));
+      });
+
+      connection.on("close", () => {
+        clearTimeout(syncTimeout);
+        reject(new Error("Connection error: Connection closed by host"));
+      });
+    });
+  }
+}
 
 export class RoomConnection {
   private readonly connection: DataConnection;
@@ -120,7 +209,12 @@ export class PlayerConnection {
   }
 }
 
-type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
+type ConnectionStatus =
+  | "created"
+  | "disconnected"
+  | "connecting"
+  | "connected"
+  | "error";
 
 type RoomPeer = {
   id: string;
@@ -131,6 +225,8 @@ type RoomPeer = {
 
 export const useRoomPeer = () => {
   const [roomPeer, setRoomPeer] = useState<RoomPeer>();
+  const pool = new PeerPool();
+  const playerPool = new PlayerPool();
 
   const roomPeerRef = useRef(roomPeer);
   useEffect(() => {
@@ -142,68 +238,23 @@ export const useRoomPeer = () => {
     onJoin: (player: Player) => Room,
     onRollRequest: (playerId: string, diceType: DiceType) => Room,
   ): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const peerCode = generatePeerCode(roomCode);
-      setRoomPeer({
-        id: peerCode,
-        status: "connecting",
-        connections: [],
-      });
+    const connectionHandler = (peer: Peer, conn: DataConnection) => {
+      conn.on("open", () => {
+        const roomPeerData = roomPeerRef.current;
+        if (!roomPeerData) return;
 
-      const peer = new Peer(peerCode, { debug: 3 });
-
-      const connectionTimeout = setTimeout(() => {
-        peer.destroy();
-        console.error("Peer error:", "Connection timeout");
-        reject(new Error("Connection timeout"));
-      }, 10000);
-
-      peer.on("open", (id) => {
-        clearTimeout(connectionTimeout);
+        const connection = new RoomConnection(conn);
+        connection.subscribe(onJoin, onRollRequest);
         setRoomPeer({
-          id: id,
-          status: "connected",
-          connections: [],
-        });
-
-        resolve(id);
-      });
-
-      peer.on("connection", (conn) => {
-        conn.on("open", () => {
-          const roomPeerData = roomPeerRef.current;
-          if (!roomPeerData) return;
-
-          const connection = new RoomConnection(conn);
-          connection.subscribe(onJoin, onRollRequest);
-          setRoomPeer({
-            ...roomPeerData,
-            connections: [...roomPeerData.connections, connection],
-          });
+          ...roomPeerData,
+          connections: [...roomPeerData.connections, connection],
         });
       });
+    };
 
-      peer.on("error", (err) => {
-        clearTimeout(connectionTimeout);
-        setRoomPeer({
-          id: peerCode,
-          status: "error",
-          connections: [],
-        });
-        console.error("Peer error:", err);
-        reject(err);
-      });
+    await pool.open(roomCode, () => undefined, connectionHandler);
 
-      peer.on("disconnected", () => {
-        clearTimeout(connectionTimeout);
-        setRoomPeer({
-          id: peerCode,
-          status: "disconnected",
-          connections: [],
-        });
-        peer.reconnect();
-      });
-    });
+    return roomCode;
   };
 
   const joinPeer = async (
@@ -211,105 +262,32 @@ export const useRoomPeer = () => {
     roomCode: string,
     onJoin: (room: Room) => void,
   ): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const peerCode = generatePeerCode(player.id);
-      setRoomPeer({
-        id: peerCode,
-        status: "connecting",
-        connections: [],
-      });
-      const peer = new Peer(peerCode, { debug: 3 });
+    const openHandler = async (peer: Peer) => {
+      const connectHandler = (conn: DataConnection) => {
+        const connection = new PlayerConnection(conn);
+        connection.subscribe(onJoin);
+        connection.join(player);
 
-      const connectionTimeout = setTimeout(() => {
-        peer.destroy();
-        console.error("Peer error:", "Connection timeout");
-        reject(new Error("Connection timeout"));
-      }, 10000);
-
-      peer.on("open", (id) => {
-        clearTimeout(connectionTimeout);
-        setRoomPeer({
-          id: id,
-          status: "connected",
-          connections: [],
+        setRoomPeer((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            hostConnection: connection,
+          };
         });
+      };
 
-        const roomPeerCode = generatePeerCode(roomCode);
-        const conn = peer.connect(roomPeerCode, { reliable: true });
+      await playerPool.open(roomCode, peer, connectHandler);
+    };
 
-        const syncTimeout = setTimeout(() => {
-          conn.close();
-          peer.destroy();
-          console.error("Peer error:", "Synchronization timeout");
-          reject(new Error("Synchronization timeout"));
-        }, 10000);
+    await pool.open(player.id, openHandler);
 
-        conn.on("open", () => {
-          clearTimeout(syncTimeout);
-          const connection = new PlayerConnection(conn);
-          connection.subscribe(onJoin);
-          connection.join(player);
-
-          setRoomPeer((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              hostConnection: connection,
-            };
-          });
-
-          resolve(id);
-        });
-
-        conn.on("error", (err) => {
-          clearTimeout(connectionTimeout);
-          setRoomPeer({
-            id: peerCode,
-            status: "error",
-            connections: [],
-          });
-          console.error("Connection error:", err);
-          reject(err);
-        });
-
-        conn.on("close", () => {
-          clearTimeout(connectionTimeout);
-          setRoomPeer({
-            id: peerCode,
-            status: "disconnected",
-            connections: [],
-          });
-          console.error("Connection error:", "Connection closed by host");
-          reject("Connection closed by host");
-        });
-      });
-
-      peer.on("error", (err) => {
-        clearTimeout(connectionTimeout);
-        setRoomPeer({
-          id: peerCode,
-          status: "error",
-          connections: [],
-        });
-        console.error("Peer error:", err);
-        reject(err);
-      });
-
-      peer.on("disconnected", () => {
-        clearTimeout(connectionTimeout);
-        setRoomPeer({
-          id: peerCode,
-          status: "disconnected",
-          connections: [],
-        });
-        peer.reconnect();
-      });
-    });
+    return player.id;
   };
 
   const sendToHost = async (message: P2PMessage): Promise<void> => {
     if (!roomPeer?.hostConnection) {
-      throw new Error(`Failed to load Host info`)
+      throw new Error(`Failed to load Host info`);
     }
 
     roomPeer.hostConnection.send(message);
@@ -317,7 +295,7 @@ export const useRoomPeer = () => {
 
   const broadcast = async (message: P2PMessage): Promise<void> => {
     if (!roomPeer) {
-      throw new Error(`Failed to load Host info`)
+      throw new Error(`Failed to load Host info`);
     }
 
     roomPeer.connections.forEach((conn) => {
