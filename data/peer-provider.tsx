@@ -11,13 +11,14 @@ interface PeerContextType {
   createRoom: (code: string) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
   rollRequest: (diceType: DiceType) => Promise<void>;
+  sendMessage: (content: string) => Promise<void>;
 }
 
 const PeerContext = createContext<PeerContextType | undefined>(undefined);
 
 export function PeerProvider({ children }: { children: React.ReactNode }) {
   const { player } = usePlayer();
-  const { room, setRoom, rollDice } = useRoom();
+  const { room, setRoom, rollDice, createChatMessage } = useRoom();
   const { createPeer, joinPeer, sendToHost, broadcast } = useRoomPeer();
 
   const roomRef = useRef(room);
@@ -36,6 +37,7 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
       host: player,
       master: player,
       rolls: [],
+      messages: [],
     });
 
     const handleNewPlayer = (player: Player): Room => {
@@ -66,11 +68,30 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
         rolls: [newRoll, ...roomData.rolls].slice(0, 100),
       };
       setRoom(newRoom);
+      broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
 
       return newRoom;
     };
 
-    await createPeer(code, handleNewPlayer, handleNewRoll);
+    const handleNewMessage = (playerId: string, content: string): Room => {
+      const roomData = roomRef.current;
+      if (!roomData) {
+        throw new Error(`Failed to load Room info`);
+      }
+
+      const newMessage = createChatMessage(playerId, content);
+
+      const newRoom: Room = {
+        ...roomData,
+        messages: [...(roomData.messages || []), newMessage].slice(-100),
+      };
+      setRoom(newRoom);
+      broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
+
+      return newRoom;
+    };
+
+    await createPeer(code, handleNewPlayer, handleNewRoll, handleNewMessage);
 
     await new Promise((res) => setTimeout(res, 1000));
   };
@@ -116,8 +137,39 @@ export function PeerProvider({ children }: { children: React.ReactNode }) {
     await broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
   };
 
+  const sendMessage = async (content: string) => {
+    if (!player) {
+      throw new Error(`Failed to load Player info`);
+    }
+
+    const roomData = roomRef.current;
+    if (!roomData) {
+      throw new Error(`Failed to load Room info`);
+    }
+
+    if (roomData.host.id !== player.id) {
+      await sendToHost(
+        createMessage("MESSAGE_REQUEST", {
+          playerId: player.id,
+          content: content,
+        }),
+      );
+      return;
+    }
+
+    const newMessage = createChatMessage(player.id, content);
+    const newRoom: Room = {
+      ...roomData,
+      messages: [...(roomData.messages || []), newMessage].slice(-100),
+    };
+    setRoom(newRoom);
+    await broadcast(createMessage("STATE_UPDATE", { room: newRoom }));
+  };
+
   return (
-    <PeerContext.Provider value={{ createRoom, joinRoom, rollRequest }}>
+    <PeerContext.Provider
+      value={{ createRoom, joinRoom, rollRequest, sendMessage }}
+    >
       {children}
     </PeerContext.Provider>
   );

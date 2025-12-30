@@ -9,8 +9,8 @@ export type P2PMessageType =
   | "JOIN"
   | "INIT_SYNC"
   | "STATE_UPDATE"
-  | "ROLL_UPDATE"
   | "ROLL_REQUEST"
+  | "MESSAGE_REQUEST"
   | "PING"
   | "PONG";
 
@@ -125,6 +125,7 @@ export class RoomConnection {
   subscribe(
     onJoin: (player: Player) => Room,
     onRollRequest: (playerId: string, diceType: DiceType) => Room,
+    onMessageRequest: (playerId: string, content: string) => Room,
   ) {
     this.connection.on("data", (data) => {
       const message = data as P2PMessage;
@@ -141,6 +142,15 @@ export class RoomConnection {
             diceType: DiceType;
           };
           const room = onRollRequest(playerId, diceType);
+          this.updateState(room);
+          break;
+        }
+        case "MESSAGE_REQUEST": {
+          const { playerId, content } = message.payload as {
+            playerId: string;
+            content: string;
+          };
+          const room = onMessageRequest(playerId, content);
           this.updateState(room);
           break;
         }
@@ -237,22 +247,32 @@ export const useRoomPeer = () => {
     roomCode: string,
     onJoin: (player: Player) => Room,
     onRollRequest: (playerId: string, diceType: DiceType) => Room,
+    onMessageRequest: (playerId: string, content: string) => Room,
   ): Promise<string> => {
+    const openHandler = async (peer: Peer) => {
+      setRoomPeer({
+        id: roomCode,
+        status: "connected",
+        connections: [],
+      });
+    }
+
     const connectionHandler = (peer: Peer, conn: DataConnection) => {
       conn.on("open", () => {
-        const roomPeerData = roomPeerRef.current;
-        if (!roomPeerData) return;
-
         const connection = new RoomConnection(conn);
-        connection.subscribe(onJoin, onRollRequest);
-        setRoomPeer({
-          ...roomPeerData,
-          connections: [...roomPeerData.connections, connection],
+        connection.subscribe(onJoin, onRollRequest, onMessageRequest);
+        setRoomPeer((prev) => {
+          if (!prev) return;
+
+          return {
+            ...prev,
+            connections: [...prev.connections, connection],
+          }
         });
       });
     };
 
-    await pool.open(roomCode, () => undefined, connectionHandler);
+    await pool.open(roomCode, openHandler, connectionHandler);
 
     return roomCode;
   };
@@ -262,43 +282,46 @@ export const useRoomPeer = () => {
     roomCode: string,
     onJoin: (room: Room) => void,
   ): Promise<string> => {
+    const id = `${roomCode}-${player.id}`
+
     const openHandler = async (peer: Peer) => {
       const connectHandler = (conn: DataConnection) => {
         const connection = new PlayerConnection(conn);
         connection.subscribe(onJoin);
         connection.join(player);
 
-        setRoomPeer((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            hostConnection: connection,
-          };
+        setRoomPeer({
+          id: id,
+          status: "connected",
+          hostConnection: connection,
+          connections: [],
         });
       };
 
       await playerPool.open(roomCode, peer, connectHandler);
     };
 
-    await pool.open(player.id, openHandler);
+    await pool.open(id, openHandler);
 
-    return player.id;
+    return id;
   };
 
   const sendToHost = async (message: P2PMessage): Promise<void> => {
-    if (!roomPeer?.hostConnection) {
+    const roomPeerData = roomPeerRef.current;
+    if (!roomPeerData?.hostConnection) {
       throw new Error(`Failed to load Host info`);
     }
 
-    roomPeer.hostConnection.send(message);
+    roomPeerData.hostConnection.send(message);
   };
 
   const broadcast = async (message: P2PMessage): Promise<void> => {
-    if (!roomPeer) {
+    const roomPeerData = roomPeerRef.current;
+    if (!roomPeerData) {
       throw new Error(`Failed to load Host info`);
     }
 
-    roomPeer.connections.forEach((conn) => {
+    roomPeerData.connections.forEach((conn) => {
       conn.send(message);
     });
   };

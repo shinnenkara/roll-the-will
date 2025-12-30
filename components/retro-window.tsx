@@ -40,7 +40,7 @@ export function RetroWindow({
           </RetroTooltip>
         )}
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-4 flex-1 flex flex-col overflow-hidden">{children}</div>
     </div>
   );
 }

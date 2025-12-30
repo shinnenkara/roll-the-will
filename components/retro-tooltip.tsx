@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 
 interface RetroButtonProps {
-  tooltip: string;
+  tooltip: React.ReactNode;
   children: React.ReactNode;
 }
 

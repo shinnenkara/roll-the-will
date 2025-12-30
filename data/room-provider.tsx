@@ -20,18 +20,28 @@ export interface RollResult {
   isCheat?: boolean;
 }
 
+export interface ChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  content: string;
+  timestamp: number;
+}
+
 export interface Room {
   id: string;
   host: Player;
   master: Player;
   players: Player[];
   rolls: RollResult[];
+  messages: ChatMessage[];
 }
 
 interface RoomContextType {
   room: Room | null;
   setRoom: (room: Room) => void;
   rollDice: (playerId: string, dice: DiceType) => RollResult;
+  createChatMessage: (playerId: string, content: string) => ChatMessage;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
@@ -67,8 +77,28 @@ export function RoomProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
+  const createChatMessage = (playerId: string, content: string): ChatMessage => {
+    const roomData = roomRef.current;
+    if (!roomData) {
+      throw new Error(`Failed to load Room info`);
+    }
+
+    const player = roomData.players.find((player) => player.id === playerId);
+    if (!player) {
+      throw new Error(`Failed to load Player info`);
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      playerId,
+      playerName: player.name,
+      content,
+      timestamp: Date.now(),
+    };
+  };
+
   return (
-    <RoomContext.Provider value={{ room, setRoom, rollDice }}>
+    <RoomContext.Provider value={{ room, setRoom, rollDice, createChatMessage }}>
       {children}
     </RoomContext.Provider>
   );

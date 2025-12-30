@@ -3,6 +3,15 @@
 import { History } from "lucide-react";
 import { RetroWindow } from "@/components/retro-window";
 import { RollResult } from "@/data/room-provider";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { RetroTooltip } from "@/components/retro-tooltip";
 
 interface RollHistoryProps {
   rolls: RollResult[];
@@ -21,23 +30,69 @@ export function RollHistory({ rolls }: RollHistoryProps) {
       <div className="max-h-[200px] overflow-y-auto">
         {rolls.length === 0 ? (
           <p className="text-center text-sm p-2 dither">
-            <span className="bg-white px-1">No rolls yet</span>
+            <span className="bg-background px-1">No rolls yet</span>
           </p>
         ) : (
-          <ul className="flex flex-col gap-1 text-sm">
-            {rolls.slice(0, 10).map((roll) => (
-              <li
-                key={roll.id}
-                className="flex items-center justify-between border-b border-black pb-1"
-              >
-                <span className="truncate max-w-[100px]">
-                  {roll.playerName}
-                </span>
-                <span className="uppercase">{roll.diceType}</span>
-                <span className="font-bold w-8 text-right">{roll.result}</span>
-              </li>
-            ))}
-          </ul>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent border-black">
+                <TableHead className="h-8 font-bold text-foreground">
+                  Player
+                </TableHead>
+                <TableHead className="h-8 font-bold text-foreground text-center">
+                  Dice
+                </TableHead>
+                <TableHead className="h-8 font-bold text-foreground text-right">
+                  Result
+                </TableHead>
+                <TableHead className="h-8 font-bold text-foreground text-right w-[60px]">
+                  Time
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rolls.slice(0, 10).map((roll) => {
+                const date = new Date(roll.timestamp);
+                const timeString = date.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                });
+                const fullTimeString = date.toLocaleString();
+
+                return (
+                  <TableRow
+                    key={roll.id}
+                    className="border-black hover:bg-black/5"
+                  >
+                    <TableCell className="py-1 font-medium truncate max-w-[100px]">
+                      {roll.playerName}
+                    </TableCell>
+                    <TableCell className="py-1 text-center uppercase">
+                      {roll.diceType}
+                    </TableCell>
+                    <TableCell className="py-1 text-right font-bold">
+                      {roll.result}
+                    </TableCell>
+                    <TableCell className="py-1 text-right">
+                      <RetroTooltip
+                        tooltip={
+                          <span suppressHydrationWarning>{fullTimeString}</span>
+                        }
+                      >
+                        <span
+                          suppressHydrationWarning
+                          className="text-xs opacity-50 cursor-help whitespace-nowrap"
+                        >
+                          {timeString}
+                        </span>
+                      </RetroTooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
       </div>
     </RetroWindow>

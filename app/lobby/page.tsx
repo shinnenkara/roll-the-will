@@ -180,7 +180,7 @@ export default function LobbyPage() {
                   setError("");
                 }}
                 maxLength={6}
-                className="text-center text-xl md:text-2xl tracking-[0.3em] w-48 uppercase"
+                className="text-center text-xl md:text-xl tracking-[0.3em] w-48 uppercase"
                 autoFocus
               />
               {error && (

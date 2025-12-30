@@ -40,7 +40,7 @@ export function PlayerList({
     <RetroWindow
       icon={<PlayerListIcon isHost={currentPlayerId === hostId} />}
       title={`Players (${players.length})`}
-      className={"h-full"}
+      // className={"h-full"}
     >
       <ul className="flex flex-col gap-1">
         {players.map((player) => (

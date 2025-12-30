@@ -12,6 +12,7 @@ import { useRoom } from "@/data/room-provider";
 import { DiceTray } from "@/components/dice-tray";
 import { DiceDisplay } from "@/components/dice-display";
 import { RollHistory } from "@/components/roll-history";
+import { ChatBox } from "@/components/chat-box";
 import { DiceType } from "@/data/dices";
 import { usePeer } from "@/data/peer-provider";
 
@@ -22,7 +23,7 @@ export default function RoomPage() {
   const { player } = usePlayer();
   const { room } = useRoom();
   const [isRolling, setIsRolling] = useState(false);
-  const { rollRequest } = usePeer();
+  const { rollRequest, sendMessage } = usePeer();
 
   const handleLeaveRoom = () => {
     router.push("/lobby");
@@ -39,6 +40,11 @@ export default function RoomPage() {
     },
     [player, rollRequest],
   );
+
+  const handleSendMessage = async (content: string) => {
+    if (!player) return;
+    await sendMessage(content);
+  };
 
   useEffect(() => {
     if (player) {
@@ -82,11 +88,17 @@ export default function RoomPage() {
 
       <div className="flex-1 p-2">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-6 gap-4 h-full">
-          <aside className="lg:col-span-2">
+          <aside className="lg:col-span-2 flex flex-col gap-4">
             {/* TODO: generate random icons for players, set max amount, add info cards */}
             <PlayerList
               players={room.players}
               hostId={room.host.id}
+              currentPlayerId={player.id}
+            />
+            <ChatBox
+              className="hidden lg:flex"
+              messages={room.messages}
+              onSendMessage={handleSendMessage}
               currentPlayerId={player.id}
             />
           </aside>
@@ -95,9 +107,13 @@ export default function RoomPage() {
             {/* TODO: show every person last rolls */}
             <DiceDisplay result={latestRoll} isRolling={isRolling} />
             <DiceTray onRoll={handleRoll} disabled={isRolling} />
-            {/* TODO: move to the side, show when exactly rolled */}
             <RollHistory rolls={room.rolls} />
-            {/* TODO: add chat to the bottom */}
+            <ChatBox
+              className="lg:hidden flex"
+              messages={room.messages}
+              onSendMessage={handleSendMessage}
+              currentPlayerId={player.id}
+            />
           </div>
         </div>
       </div>
