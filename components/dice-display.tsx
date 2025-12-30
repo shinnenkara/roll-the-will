@@ -83,7 +83,7 @@ export function DiceDisplay({
                       <span className="bg-background px-1">* Hidden *</span>
                     </p>
                   )}
-                  {latestRoll.isCheat && (
+                  {latestRoll.isCheat && !latestRoll.isHidden && (
                     <p className="text-xs mt-1 dither inline-block px-1">
                       <span className="bg-background px-1">* Fate sealed *</span>
                     </p>
