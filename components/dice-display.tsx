@@ -60,6 +60,11 @@ export function DiceDisplay({
                   <p className="text-sm">
                     Rolled {latestRoll.diceType.toUpperCase()}
                   </p>
+                  {latestRoll.result === dices[latestRoll.diceType].maxValue && (
+                    <p className="text-sm font-bold mt-1">
+                      CRITICAL ROLL!
+                    </p>
+                  )}
                   {latestRoll.isCheat && (
                     <p className="text-xs mt-1 dither inline-block px-1">
                       <span className="bg-background px-1">* Fate sealed *</span>
